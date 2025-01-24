@@ -13,6 +13,7 @@
 //debug
 int digitalread(int n){return n;}
 int digitalwrite(int m){return m;}
+int random(int a,int b){return a+b;}
 
 // common class
 class common
@@ -49,6 +50,12 @@ private:
 public:
     player(/* args */); // constructor
 
+    // move player
+    void up();
+    void down();
+    void left();
+    void right();
+
     // fire bullet
     void fire();
 };
@@ -56,6 +63,30 @@ public:
 player::player(/* args */){
     x = field_width / 4;
     y = field_height / 2;
+}
+
+void player::up(){
+    if (y < field_height){
+        y++;
+    }    
+}
+
+void player::down(){
+    if (y > 0){
+        y--;
+    }
+}
+
+void player::left(){
+    if (x > 0){
+        x--;
+    }
+}
+
+void player::right(){
+    if (x < field_width/4){
+        x++;
+    }
 }
 
 void player::fire(){
@@ -109,42 +140,151 @@ void enemy::move(){
     x--;
 }
 
-void bulletCC(){}
-void bulletmove(){}
-void enemymove(){}
-void poscheck(){}
-void enemyCC(){}
-void breakcheck(){}
+void bulletCC(){
+    // create bullet
+    for (int i = 0; i < max_bullet; i++){
+        if (bullets[i] == nullptr){
+            bullets[i] = new bullet(mainplayer.x, mainplayer.y);
+            break;
+        }
+    }
+}
+void bulletmove(){
+    for (int i = 0; i < max_bullet; i++){
+        if (bullets[i] != nullptr){
+            bullets[i]->move();
+        }
+    }
+}
+void enemymove(){
+    for (int i = 0; i < max_enemy; i++){
+        if (enemys[i] != nullptr){
+            enemys[i]->move();
+        }
+    }
+}
+void poscheck(){
+    for (int i = 0; i < max_enemy; i++){
+        if (enemys[i] != nullptr){
+            if (mainplayer.x == enemys[i]->x && mainplayer.y == enemys[i]->y){
+                stop = true;
+            }
+        }
+    }
+}
+void enemyCC(){
+    for (int i = 0; i < max_enemy; i++){
+        if (enemys[i] == nullptr){
+            enemys[i] = new enemy();
+            break;
+        }
+    }
+}
+void breakcheck(){
+    for (int i = 0; i < max_enemy; i++){
+        for (int j = 0; j < max_bullet; j++){
+            if (enemys[i] != nullptr && bullets[j] != nullptr){
+                if (enemys[i]->x == bullets[j]->x && enemys[i]->y == bullets[j]->y){
+                    delete enemys[i];
+                    delete bullets[j];
+                    enemys[i] = nullptr;
+                    bullets[j] = nullptr;
+                }
+            }
+        }
+    }
+}
+void deletebullet(){
+    for (int i = 0; i < max_bullet; i++){
+        if (bullets[i] != nullptr){
+            if (bullets[i]->x > field_width){
+                delete bullets[i];
+                bullets[i] = nullptr;
+            }
+        }
+    }
+}
+void deleteenemy(){
+    for (int i = 0; i < max_enemy; i++){
+        if (enemys[i] != nullptr){
+            if (enemys[i]->x < 0){
+                delete enemys[i];
+                enemys[i] = nullptr;
+            }
+        }
+    }
+}
 
+field mainfield;
+player mainplayer;
+enemy *enemys[8];
+bullet *bullets[10];
 bool stop = false;
-void main(){
-    field field;
-    player player;
-    enemy *enemys[8];
-    bullet *bullets[10];
 
-    field.data[player.x][player.y] = 1;
+// core0
+void loop(){
+    mainfield.data[mainplayer.x][mainplayer.y] = 1;
 
-    while (stop){
+    while (!stop){
         if(digitalread(1) == 1){
-            player.x++;
+            mainplayer.up();
         }if(digitalread(2) == 1){
-            player.x--;
+            mainplayer.down();
         }if(digitalread(3) == 1){
-            player.y++;
+            mainplayer.left();
         }if(digitalread(4) == 1){
-            player.y++;
+            mainplayer.right();
         }if(digitalread(5) == 1){
-            bulletCC();
+            bulletCC();//弾の生成判定
         }
 
-        bulletmove();
-        enemymove();
-        enemyCC();
-        poscheck();
-        breakcheck();
+        bulletmove();//弾を動かす
+        enemymove();//敵を動かす
+        breakcheck();//敵と弾の衝突判定
+        poscheck();//プレイヤーと敵の衝突判定
+        enemyCC();//敵の生成判定
+        deletebullet();//弾の削除判定
+        deleteenemy();//敵の削除判定
+
+        mainfield.update();
 
     }
     
 }
 
+// core1
+void setup1(){
+    selial.begin(9600);
+}
+
+void loop1(){
+    selial.print("+");
+    for (int i = 0; i < count; i++){
+        selial.print("-");
+    }
+    selial.println("+");
+
+    for (int i = 0; i < field_height; i++){
+        selial.print("|");
+        for (int j = 0; j < field_width; j++){
+            if (mainfield.data[j][i] == 0){
+                selial.print(" ");
+            }else if (mainfield.data[j][i] == 1){
+                selial.print("P");
+            }else if (mainfield.data[j][i] == 2){
+                selial.print("E");
+            }else if (mainfield.data[j][i] == 3){
+                selial.print("B");
+            }
+        }
+        selial.println("|");
+    }
+
+    selial.print("+");
+    for (int i = 0; i < count; i++){
+        selial.print("-");
+    }
+    selial.println("+");
+
+    delay(1000);    
+}
