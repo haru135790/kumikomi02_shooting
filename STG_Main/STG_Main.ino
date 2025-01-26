@@ -4,7 +4,7 @@
 #define player_point 1
 #define enemy_point 2
 #define bullet_point 3
-#define max_enemy 10
+#define max_enemy 5
 #define max_bullet 10
 #define bullet_interval 1.0
 #define enemy_interval 2.0
@@ -140,6 +140,88 @@ void enemy::move(){
     x--;
 }
 
+
+
+field mainfield;
+player mainplayer;
+enemy *enemys[max_enemy];
+bullet *bullets[max_bullet];
+bool stop = false;
+
+void setup(){
+
+}
+
+// core0
+void loop(){
+    mainfield.data[mainplayer.x][mainplayer.y] = 1;
+
+    while (1){
+        if(digitalread(1) == 1){
+            mainplayer.up();
+        }if(digitalread(2) == 1){
+            mainplayer.down();
+        }if(digitalread(3) == 1){
+            mainplayer.left();
+        }if(digitalread(4) == 1){
+            mainplayer.right();
+        }if(digitalread(5) == 1){
+            bulletCC();//弾の生成判定
+        }
+
+        bulletmove();//弾を動かす
+        enemymove();//敵を動かす
+        breakcheck();//敵と弾の衝突判定
+        poscheck();//プレイヤーと敵の衝突判定
+        enemyCC();//敵の生成判定
+        deletebullet();//弾の削除判定
+        deleteenemy();//敵の削除判定
+
+        // mainfield.update();
+
+        sleep_ms(1000);
+
+    }
+    
+}
+
+// core1
+void setup1(){
+    Serial.begin(9600);
+}
+
+void loop1(){
+    Serial.print("+");
+    for (int i = 0; i < field_width; i++){
+        Serial.print("-");
+    }
+    Serial.println("+");
+
+    for (int i = 0; i < field_height; i++){
+        Serial.print("|");
+        for (int j = 0; j < field_width; j++){
+            if (mainfield.data[j][i] == 0){
+                Serial.print(" ");
+            }else if (mainfield.data[j][i] == 1){
+                Serial.print("P");
+            }else if (mainfield.data[j][i] == 2){
+                Serial.print("E");
+            }else if (mainfield.data[j][i] == 3){
+                Serial.print("B");
+            }
+        }
+        Serial.println("|");
+    }
+
+    Serial.print("+");
+    for (int i = 0; i < field_width; i++){
+        Serial.print("-");
+    }
+    Serial.println("+");
+
+    delay(1000);    
+}
+
 void bulletCC(){
     // create bullet
     for (int i = 0; i < max_bullet; i++){
@@ -176,6 +258,7 @@ void enemyCC(){
     for (int i = 0; i < max_enemy; i++){
         if (enemys[i] == nullptr){
             enemys[i] = new enemy();
+            mainfield.data[enemys[i]->x][enemys[i]->y] = 2;
             break;
         }
     }
@@ -213,78 +296,4 @@ void deleteenemy(){
             }
         }
     }
-}
-
-field mainfield;
-player mainplayer;
-enemy *enemys[8];
-bullet *bullets[10];
-bool stop = false;
-
-// core0
-void loop(){
-    mainfield.data[mainplayer.x][mainplayer.y] = 1;
-
-    while (!stop){
-        if(digitalread(1) == 1){
-            mainplayer.up();
-        }if(digitalread(2) == 1){
-            mainplayer.down();
-        }if(digitalread(3) == 1){
-            mainplayer.left();
-        }if(digitalread(4) == 1){
-            mainplayer.right();
-        }if(digitalread(5) == 1){
-            bulletCC();//弾の生成判定
-        }
-
-        bulletmove();//弾を動かす
-        enemymove();//敵を動かす
-        breakcheck();//敵と弾の衝突判定
-        poscheck();//プレイヤーと敵の衝突判定
-        enemyCC();//敵の生成判定
-        deletebullet();//弾の削除判定
-        deleteenemy();//敵の削除判定
-
-        mainfield.update();
-
-    }
-    
-}
-
-// core1
-void setup1(){
-    selial.begin(9600);
-}
-
-void loop1(){
-    selial.print("+");
-    for (int i = 0; i < count; i++){
-        selial.print("-");
-    }
-    selial.println("+");
-
-    for (int i = 0; i < field_height; i++){
-        selial.print("|");
-        for (int j = 0; j < field_width; j++){
-            if (mainfield.data[j][i] == 0){
-                selial.print(" ");
-            }else if (mainfield.data[j][i] == 1){
-                selial.print("P");
-            }else if (mainfield.data[j][i] == 2){
-                selial.print("E");
-            }else if (mainfield.data[j][i] == 3){
-                selial.print("B");
-            }
-        }
-        selial.println("|");
-    }
-
-    selial.print("+");
-    for (int i = 0; i < count; i++){
-        selial.print("-");
-    }
-    selial.println("+");
-
-    delay(1000);    
 }
